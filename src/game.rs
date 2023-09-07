@@ -11,9 +11,9 @@ const ASCII_NINE: u8 = 57;
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct GameState {
-    pub max_guesses: i64,
-    pub curr_guesses: i64,
-    pub guess_length: i64,
+    pub max_guesses: u16,
+    pub curr_guesses: u16,
+    pub guess_length: u8,
     answer: String,
 }
 
@@ -33,8 +33,12 @@ impl GameState {
     const ALMOST_STRING: &str = "Pico";
     const FAIL_STRING: &str = "Bagels";
     #[must_use]
-    pub fn new_game() -> Self {
-        Self::default()
+    pub fn new_game(max_guesses: u16, guess_length: u8) -> Self {
+        Self {
+            max_guesses,
+            guess_length,
+            ..Default::default()
+        }
     }
     #[must_use]
     /// # Panics
