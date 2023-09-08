@@ -4,11 +4,11 @@ use rand::{
     distributions::Alphanumeric,
     prelude::{thread_rng, Distribution},
 };
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Debug};
 
 const ASCII_ZERO: u8 = 48;
 const ASCII_NINE: u8 = 57;
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct GameState {
     pub max_guesses: u16,
@@ -57,11 +57,12 @@ impl GameState {
                 })
                 .take(self.guess_length.try_into().unwrap())
                 .collect(),
-            ..Default::default()
+            ..self.clone()
         }
     }
     #[must_use]
-    pub fn compare_answer(&self, guess: &str) -> Vec<String> {
+    pub fn compare_answer(&mut self, guess: &str) -> Vec<String> {
+        self.curr_guesses += 1;
         let correct_idx: HashSet<usize> = self
             .answer
             .chars()
@@ -94,5 +95,20 @@ impl GameState {
     pub fn get_answer(&self) -> &str {
         // useful for end game, if player fails
         self.answer.as_str()
+    }
+
+    /// Return whether player can make another guess
+    #[must_use]
+    pub const fn available_turn(&self) -> bool {
+        self.curr_guesses < self.max_guesses
+    }
+
+    /// Return whether a result is indicative of being the answer
+    #[must_use]
+    pub fn is_guess_correct(&self, result: &[String]) -> bool {
+        if result.len() > self.guess_length.into() {
+            return false;
+        }
+        result.iter().filter(|&r| r == Self::CORRECT_STRING).count() == self.guess_length.into()
     }
 }

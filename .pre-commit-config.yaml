@@ -22,7 +22,6 @@ repos:
       - id: fmt
         args: ["--", "--check"]
       - id: clippy
-        name: clippy-2020 # do it this ugly way until i learn Rust packaging
         args:
           [
             "--manifest-path",
