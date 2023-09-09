@@ -1,9 +1,7 @@
 // File to hold all logic persisting to a game of Mastermind.
+use crate::cli::BaseGameArgs;
 use itertools::Itertools;
-use rand::{
-    distributions::Alphanumeric,
-    prelude::{thread_rng, Distribution},
-};
+use rand::{distributions::Alphanumeric, prelude::Distribution, rngs::StdRng, SeedableRng};
 use std::{collections::HashSet, fmt::Debug, io::Write};
 
 const ASCII_A: u8 = 65;
@@ -34,20 +32,26 @@ impl GameState {
     const ALMOST_STRING: &str = "Pico";
     const FAIL_STRING: &str = "Bagels";
     #[must_use]
-    pub fn new_game(max_guesses: u16, guess_length: u8, letter_max: u8) -> Self {
+    fn get_rng(val: Option<u64>) -> StdRng {
+        val.map_or_else(StdRng::from_entropy, StdRng::seed_from_u64)
+    }
+    #[must_use]
+    pub fn new_game(args: &BaseGameArgs) -> Self {
+        let mut gen = Self::get_rng(args.seed_val);
         Self {
-            max_guesses,
-            guess_length,
+            max_guesses: args.guess_max,
+            guess_length: args.length_answer,
+            letter_max: args.max_letter,
             answer: Alphanumeric
-                .sample_iter(&mut thread_rng())
+                .sample_iter(&mut gen)
                 .filter_map(|c| {
-                    if (ASCII_A..=letter_max).contains(&c) {
+                    if (ASCII_A..=args.get_max_letter()).contains(&c) {
                         Some(char::from(c))
                     } else {
                         None
                     }
                 })
-                .take(guess_length.into())
+                .take(args.length_answer.into())
                 .collect(),
             ..Default::default()
         }
@@ -119,11 +123,24 @@ pub fn get_cli_guess(game: &GameState) -> String {
     std::io::stdout().flush().unwrap();
     let mut guess_string = String::new();
     while let Ok(n) = std::io::stdin().read_line(&mut guess_string) {
-        // since it is line, there is newline char at end
-        if n - 1 == game.guess_length.into() {
+        // this will filter out the bonus newline at the end, which is HELPFUL
+        let valid_chars = guess_string
+            .chars()
+            .filter(|&c| {
+                (ASCII_A..=game.letter_max.try_into().unwrap()).contains(&u8::try_from(c).unwrap())
+            })
+            .count();
+        if valid_chars == game.guess_length.into() {
             break;
         }
-        if n > game.guess_length.into() {
+        // don't count the new line in this comparison
+        if n - 1 > valid_chars {
+            println!(
+                "REMINDER: characters for guess must be [A-{}]",
+                game.letter_max
+            );
+        }
+        if valid_chars > game.guess_length.into() {
             println!("Your guess is too long, needs to be {}", game.guess_length);
         } else {
             println!("Your guess is too short, needs to be {}", game.guess_length);

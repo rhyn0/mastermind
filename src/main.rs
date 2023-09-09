@@ -1,16 +1,18 @@
 pub mod cli;
 pub mod game;
 
-use cli::ProgramParams;
+use cli::{BaseGameArgs, GameParams};
 use game::GameState;
 
 fn main() {
-    let args = cli::get_cli_args();
-    play_cli_game(&args);
+    let game_args = cli::get_args();
+    match game_args {
+        GameParams::CLI(cli_args) => play_cli_game(&cli_args),
+    };
 }
 
-fn play_cli_game(params: &ProgramParams) {
-    let mut game = GameState::new_game(params.guess_max, params.length_answer, 75);
+fn play_cli_game(params: &BaseGameArgs) {
+    let mut game = GameState::new_game(params);
     while game.available_turn() {
         // obtain guess
         let guess = game::get_cli_guess(&game);
