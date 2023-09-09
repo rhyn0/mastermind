@@ -1,27 +1,19 @@
 pub mod cli;
 pub mod game;
 
-use std::io::Write;
-
-use clap::Parser;
 use cli::ProgramParams;
 use game::GameState;
 
 fn main() {
-    let args = ProgramParams::parse();
+    let args = cli::get_cli_args();
     play_cli_game(&args);
 }
 
 fn play_cli_game(params: &ProgramParams) {
-    let mut game = GameState::new_game(params.guess_max, params.length_answer).start_game();
+    let mut game = GameState::new_game(params.guess_max, params.length_answer, 75);
     while game.available_turn() {
         // obtain guess
-        let mut guess = String::new();
-        let mut stdout_lock = std::io::stdout().lock();
-        write!(stdout_lock, "Enter in guess: ").unwrap();
-        std::io::stdout().flush().unwrap();
-        std::io::stdin().read_line(&mut guess).unwrap();
-
+        let guess = game::get_cli_guess(&game);
         let guess_result = game.compare_answer(&guess);
         if game.is_guess_correct(&guess_result) {
             println!(

@@ -4,16 +4,16 @@ use rand::{
     distributions::Alphanumeric,
     prelude::{thread_rng, Distribution},
 };
-use std::{collections::HashSet, fmt::Debug};
+use std::{collections::HashSet, fmt::Debug, io::Write};
 
-const ASCII_ZERO: u8 = 48;
-const ASCII_NINE: u8 = 57;
+const ASCII_A: u8 = 65;
 #[derive(Debug, Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct GameState {
     pub max_guesses: u16,
     pub curr_guesses: u16,
     pub guess_length: u8,
+    pub letter_max: char,
     answer: String,
 }
 
@@ -23,6 +23,7 @@ impl Default for GameState {
             max_guesses: 10,
             curr_guesses: 0,
             guess_length: 3,
+            letter_max: 'J',
             answer: String::new(),
         }
     }
@@ -33,35 +34,28 @@ impl GameState {
     const ALMOST_STRING: &str = "Pico";
     const FAIL_STRING: &str = "Bagels";
     #[must_use]
-    pub fn new_game(max_guesses: u16, guess_length: u8) -> Self {
+    pub fn new_game(max_guesses: u16, guess_length: u8, letter_max: u8) -> Self {
         Self {
             max_guesses,
             guess_length,
-            ..Default::default()
-        }
-    }
-    #[must_use]
-    /// # Panics
-    ///
-    /// Will panic if i64 to usize conversion fails
-    pub fn start_game(&self) -> Self {
-        Self {
             answer: Alphanumeric
                 .sample_iter(&mut thread_rng())
                 .filter_map(|c| {
-                    if (ASCII_ZERO..=ASCII_NINE).contains(&c) {
+                    if (ASCII_A..=letter_max).contains(&c) {
                         Some(char::from(c))
                     } else {
                         None
                     }
                 })
-                .take(self.guess_length.try_into().unwrap())
+                .take(guess_length.into())
                 .collect(),
-            ..self.clone()
+            ..Default::default()
         }
     }
     #[must_use]
     pub fn compare_answer(&mut self, guess: &str) -> Vec<String> {
+        // TODO: change logic and probably break into two functions
+        // Code for inexact is check all other indices that weren't exact matches
         self.curr_guesses += 1;
         let correct_idx: HashSet<usize> = self
             .answer
@@ -111,4 +105,35 @@ impl GameState {
         }
         result.iter().filter(|&r| r == Self::CORRECT_STRING).count() == self.guess_length.into()
     }
+}
+
+/// # Panics
+///
+/// Panics when unable to write to stdout with print!
+#[must_use]
+pub fn get_cli_guess(game: &GameState) -> String {
+    print!(
+        "Enter in guess - valid characters [A-{}]: ",
+        game.letter_max
+    );
+    std::io::stdout().flush().unwrap();
+    let mut guess_string = String::new();
+    while let Ok(n) = std::io::stdin().read_line(&mut guess_string) {
+        // since it is line, there is newline char at end
+        if n - 1 == game.guess_length.into() {
+            break;
+        }
+        if n > game.guess_length.into() {
+            println!("Your guess is too long, needs to be {}", game.guess_length);
+        } else {
+            println!("Your guess is too short, needs to be {}", game.guess_length);
+        }
+        guess_string.clear();
+        print!(
+            "Enter in guess - valid characters [A-{}]: ",
+            game.letter_max
+        );
+        std::io::stdout().flush().unwrap();
+    }
+    guess_string.trim().to_owned()
 }
