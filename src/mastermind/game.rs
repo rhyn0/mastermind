@@ -1,5 +1,6 @@
 // File to hold all logic persisting to a game of Mastermind.
-use crate::cli::BaseGameArgs;
+use crate::mastermind::cli;
+use cli::BaseGameArgs;
 use itertools::Itertools;
 use rand::{distributions::Alphanumeric, prelude::Distribution, rngs::StdRng, SeedableRng};
 use std::{collections::HashSet, fmt::Debug, io::Write};

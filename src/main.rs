@@ -1,11 +1,12 @@
-pub mod cli;
-pub mod game;
+pub mod mastermind;
 
-use cli::{BaseGameArgs, GameParams};
-use game::GameState;
+use mastermind::{
+    cli::{BaseGameArgs, GameParams},
+    game::GameState,
+};
 
 fn main() {
-    let game_args = cli::get_args();
+    let game_args = mastermind::cli::get_args();
     match game_args {
         GameParams::CLI(cli_args) => play_cli_game(&cli_args),
     };
@@ -15,7 +16,7 @@ fn play_cli_game(params: &BaseGameArgs) {
     let mut game = GameState::new_game(params);
     while game.available_turn() {
         // obtain guess
-        let guess = game::get_cli_guess(&game);
+        let guess = mastermind::game::get_cli_guess(&game);
         let guess_result = game.compare_answer(&guess);
         if game.is_guess_correct(&guess_result) {
             println!(
