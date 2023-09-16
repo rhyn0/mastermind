@@ -105,10 +105,11 @@ impl GameState {
     /// Return whether a result is indicative of being the answer
     #[must_use]
     pub fn is_guess_correct(&self, result: &[String]) -> bool {
-        if result.len() > self.guess_length.into() {
+        if result.len() > Into::<usize>::into(self.guess_length) {
             return false;
         }
-        result.iter().filter(|&r| r == Self::CORRECT_STRING).count() == self.guess_length.into()
+        result.iter().filter(|&r| r == Self::CORRECT_STRING).count()
+            == Into::<usize>::into(self.guess_length)
     }
 }
 
@@ -131,7 +132,7 @@ pub fn get_cli_guess(game: &GameState) -> String {
                 (ASCII_A..=game.letter_max.try_into().unwrap()).contains(&u8::try_from(c).unwrap())
             })
             .count();
-        if valid_chars == game.guess_length.into() {
+        if valid_chars == Into::<usize>::into(game.guess_length) {
             break;
         }
         // don't count the new line in this comparison
@@ -141,7 +142,7 @@ pub fn get_cli_guess(game: &GameState) -> String {
                 game.letter_max
             );
         }
-        if valid_chars > game.guess_length.into() {
+        if valid_chars > Into::<usize>::into(game.guess_length) {
             println!("Your guess is too long, needs to be {}", game.guess_length);
         } else {
             println!("Your guess is too short, needs to be {}", game.guess_length);

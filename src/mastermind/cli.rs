@@ -14,6 +14,7 @@ pub struct ProgramParams {
 #[derive(Subcommand, Debug)]
 pub enum GameParams {
     CLI(BaseGameArgs),
+    Server(BaseGameArgs),
 }
 
 #[derive(Args, Debug, Copy, Clone)]
@@ -147,26 +148,34 @@ impl BaseGameArgs {
     }
 }
 
-#[must_use]
-pub fn get_args() -> GameParams {
-    let mut params = ProgramParams::parse();
-    match &params.game_type {
-        GameParams::CLI(args) => {
-            let new_args = if args.interactive {
-                args.get_interactive_args()
-            } else {
-                *args
-            };
-            if !new_args.max_letter.is_ascii_uppercase() {
-                let mut cmd = ProgramParams::command();
-                cmd.error(
-                    ErrorKind::ArgumentConflict,
-                    "Maximum letter to use for Mastermind Code must be ASCII Uppercase.",
-                )
-                .exit()
+impl GameParams {
+    #[must_use]
+    pub fn get_args(&self) -> BaseGameArgs {
+        // let mut params = ProgramParams::parse();
+
+        match self {
+            Self::CLI(args) => {
+                let new_args = if args.interactive {
+                    args.get_interactive_args()
+                } else {
+                    *args
+                };
+                if !new_args.max_letter.is_ascii_uppercase() {
+                    let mut cmd = ProgramParams::command();
+                    cmd.error(
+                        ErrorKind::ArgumentConflict,
+                        "Maximum letter to use for Mastermind Code must be ASCII Uppercase.",
+                    )
+                    .exit()
+                }
+                new_args
             }
-            params.game_type = GameParams::CLI(new_args);
+            Self::Server(x) => *x,
         }
     }
-    params.game_type
+}
+
+#[must_use]
+pub fn get_game_type() -> ProgramParams {
+    ProgramParams::parse()
 }

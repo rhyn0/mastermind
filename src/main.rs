@@ -3,16 +3,21 @@ pub mod mastermind;
 use mastermind::{
     cli::{BaseGameArgs, GameParams},
     game::GameState,
+    server::start_rocket,
 };
 
 fn main() {
-    let game_args = mastermind::cli::get_args();
-    match game_args {
-        GameParams::CLI(cli_args) => play_cli_game(&cli_args),
+    let params = mastermind::cli::get_game_type();
+    match params.game_type {
+        GameParams::CLI(_) => play_cli_game(&params.game_type.get_args()),
+        GameParams::Server(_) => {
+            start_rocket(&params.game_type.get_args());
+        }
     };
 }
 
 fn play_cli_game(params: &BaseGameArgs) {
+    dbg!(params);
     let mut game = GameState::new_game(params);
     while game.available_turn() {
         // obtain guess
